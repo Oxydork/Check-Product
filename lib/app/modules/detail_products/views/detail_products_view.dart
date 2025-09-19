@@ -29,15 +29,58 @@ class DetailProductsView extends GetView<DetailProductsController> {
               SizedBox(
                 height: 150,
                 width: 150,
-                child: Image.network(
-                  product.file_url,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      color: Colors.grey[500],
-                      child: const Icon(Icons.error),
+                child: GestureDetector(
+                  onTap: () {
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return Dialog(
+                          child: SizedBox(
+                            width: MediaQuery.of(context).size.width * 0.9,
+                            height: MediaQuery.of(context).size.height * 0.7,
+                            child: Column(
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    IconButton(
+                                      onPressed: () =>
+                                          Navigator.of(context).pop(),
+                                      icon: const Icon(Icons.close),
+                                    ),
+                                  ],
+                                ),
+                                Expanded(
+                                  child: Image.network(
+                                    product.file_url,
+                                    fit: BoxFit.contain,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
                     );
                   },
+                  child: product.file_url.isNotEmpty
+                      ? Image.network(
+                          product.file_url,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              color: Colors.grey[300],
+                              child: const Icon(Icons.error),
+                            );
+                          },
+                        )
+                      : Container(
+                          color: Colors.red[300],
+                          child: const Icon(
+                            Icons.image_not_supported,
+                            color: Colors.grey,
+                          ),
+                        ),
                 ),
               ),
             ],
@@ -161,8 +204,8 @@ class DetailProductsView extends GetView<DetailProductsController> {
                           );
                         },
                         child: Obx(() => controller.isLoadingDelete.isFalse
-                            ? Text("Delete Product")
-                            : SizedBox(
+                            ? const Text("Delete Product")
+                            : const SizedBox(
                                 height: 15,
                                 width: 15,
                                 child: CircularProgressIndicator(
@@ -173,7 +216,7 @@ class DetailProductsView extends GetView<DetailProductsController> {
                       ),
                     ]);
               },
-              child: Text(
+              child: const Text(
                 "Delete Product",
                 style: TextStyle(color: Colors.red),
               ))
