@@ -1,0 +1,40 @@
+name: qr_code_new
+version: 1.0.0+1
+publish_to: none
+description: A new Flutter project.
+environment:
+  sdk: ">=3.1.0 <4.0.0"
+
+dependencies:
+  cloud_firestore: ^4.13.6
+  cupertino_icons: ^1.0.2
+  firebase_auth: ^4.15.3
+  firebase_core: ^2.24.2
+  flutter:
+    sdk: flutter
+  flutter_barcode_scanner:
+    git:
+      url: https://github.com/decodevM/flutter_barcode_scanner.git
+      ref: flutter-3.29
+  get: 4.6.6
+  image_picker: ^1.1.2
+  intl: ^0.20.2
+  material_floating_search_bar_2: ^0.5.0
+  open_file_plus:
+    git:
+      url: https://github.com/jim-2000/open_file_plus.git
+      ref: main
+  path: ^1.8.1
+  path_provider: ^2.1.1
+  pdf: ^3.10.7
+  qr_flutter: ^4.1.0
+  robusta_firebase_core: ^0.1.1
+  supabase_flutter: ^0.2.0
+
+dev_dependencies:
+  flutter_lints: 3.0.1
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
