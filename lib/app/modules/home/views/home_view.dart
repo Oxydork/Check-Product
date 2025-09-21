@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:get/get.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:qr_code_new/app/controllers/auth_controller.dart';
 import 'package:qr_code_new/app/routes/app_pages.dart';
 
@@ -44,24 +44,23 @@ class HomeView extends GetView<HomeController> {
               title = "Barcode";
               icon = Icons.barcode_reader;
               onTap = () async {
-                String barcode = await FlutterBarcodeScanner.scanBarcode(
-                  "#000000",
-                  "Cancel",
-                  true,
-                  ScanMode.BARCODE,
-                );
+                // Ganti dari BarcodeScannerScreen.scanBarcode ke Get.to
+                String? barcode = await Get.to(() => _HomeBarcodeScanner());
 
-                //Get data dari firebase searching di product id
-                Map<String, dynamic> hasil =
-                    await controller.getProductId(barcode);
-                if (hasil['error'] == false) {
-                  Get.toNamed(Routes.DETAIL_PRODUCTS, arguments: hasil["data"]);
-                } else {
-                  Get.snackbar(
-                    "Error",
-                    hasil["message"],
-                    duration: const Duration(seconds: 3),
-                  );
+                if (barcode != null && barcode != "-1" && barcode.isNotEmpty) {
+                  //Get data dari firebase searching di product id
+                  Map<String, dynamic> hasil =
+                      await controller.getProductId(barcode);
+                  if (hasil['error'] == false) {
+                    Get.toNamed(Routes.DETAIL_PRODUCTS,
+                        arguments: hasil["data"]);
+                  } else {
+                    Get.snackbar(
+                      "Error",
+                      hasil["message"],
+                      duration: const Duration(seconds: 3),
+                    );
+                  }
                 }
               };
               break;
@@ -113,5 +112,50 @@ class HomeView extends GetView<HomeController> {
         child: const Icon(Icons.logout),
       ),
     );
+  }
+}
+
+// Scanner page untuk Home
+class _HomeBarcodeScanner extends StatefulWidget {
+  @override
+  _HomeBarcodeScannerState createState() => _HomeBarcodeScannerState();
+}
+
+class _HomeBarcodeScannerState extends State<_HomeBarcodeScanner> {
+  MobileScannerController controller = MobileScannerController();
+  bool isDetected = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Scan Barcode'),
+        backgroundColor: Colors.black,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Get.back(result: "-1"), // Return "-1" seperti cancel
+        ),
+      ),
+      body: MobileScanner(
+        controller: controller,
+        onDetect: (barcodeCapture) {
+          if (!isDetected) {
+            isDetected = true;
+            final List<Barcode> barcodes = barcodeCapture.barcodes;
+            if (barcodes.isNotEmpty && barcodes.first.rawValue != null) {
+              Get.back(result: barcodes.first.rawValue);
+            } else {
+              Get.back(result: "-1");
+            }
+          }
+        },
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
   }
 }

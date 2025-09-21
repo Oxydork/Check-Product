@@ -3,9 +3,9 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:path/path.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -260,37 +260,28 @@ class AddProductController extends GetxController {
         print("File Path: ${filename}");
 
         try {
-          final response = await supabaseClient.storage.from('product').upload(
+          // Upload file - di versi baru tidak ada response.error, langsung throw exception jika error
+          await supabaseClient.storage.from('product').upload(
                 filename,
                 File(file.path),
               );
 
-          print("Supabase upload response: $response");
-          print("Upload error: ${response.error}");
+          print("Supabase upload successful");
 
-          if (response.error == null) {
-            final fileUrl = supabaseClient.storage
-                .from('product')
-                .getPublicUrl(filename)
-                .data;
+          // Get public URL - di versi baru langsung return string, tidak ada .data
+          final fileUrl =
+              supabaseClient.storage.from('product').getPublicUrl(filename);
 
-            print("Generated file URL: $fileUrl");
+          print("Generated file URL: $fileUrl");
 
-            try {
-              await firestore
-                  .collection("product")
-                  .doc(hasilFirestore.id)
-                  .update({"file_url": fileUrl});
-              print("File URL updated to Firestore successfully");
-            } catch (e) {
-              print("Error updating Firestore with file_url: $e");
-            }
-          } else {
-            print("Upload failed, setting file_url to empty string");
+          try {
             await firestore
                 .collection("product")
                 .doc(hasilFirestore.id)
-                .update({"file_url": ""});
+                .update({"file_url": fileUrl});
+            print("File URL updated to Firestore successfully");
+          } catch (e) {
+            print("Error updating Firestore with file_url: $e");
           }
         } catch (uploadError) {
           print("Exception during file upload: $uploadError");
@@ -327,13 +318,14 @@ class AddProductController extends GetxController {
   Future<void> startScanning() async {
     try {
       isScanning.value = true;
-      String barcode = await FlutterBarcodeScanner.scanBarcode(
-          "#000000", "Cancel", true, ScanMode.BARCODE);
-      scannedBarcode.value = barcode != "-1" ? barcode : '';
 
-      // Auto fill code field if barcode scanned successfully
-      if (scannedBarcode.value.isNotEmpty) {
+      final result = await Get.to(() => _BarcodeScannerPage());
+
+      if (result != null && result.toString().isNotEmpty && result != "-1") {
+        scannedBarcode.value = result.toString();
         codeC.text = scannedBarcode.value;
+      } else {
+        scannedBarcode.value = '';
       }
     } catch (e) {
       print('Error scanning barcode: $e');
@@ -424,5 +416,51 @@ class AddProductController extends GetxController {
     nameC.dispose();
     rhC.dispose();
     super.onClose();
+  }
+}
+
+// Simple Scanner Page untuk GetX
+class _BarcodeScannerPage extends StatefulWidget {
+  @override
+  _BarcodeScannerPageState createState() => _BarcodeScannerPageState();
+}
+
+class _BarcodeScannerPageState extends State<_BarcodeScannerPage> {
+  MobileScannerController controller = MobileScannerController();
+  bool isDetected = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Scan Barcode'),
+        backgroundColor: Colors.black,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () =>
+              Get.back(result: "-1"), // Mirip cancel di FlutterBarcodeScanner
+        ),
+      ),
+      body: MobileScanner(
+        controller: controller,
+        onDetect: (barcodeCapture) {
+          if (!isDetected) {
+            isDetected = true;
+            final List<Barcode> barcodes = barcodeCapture.barcodes;
+            if (barcodes.isNotEmpty && barcodes.first.rawValue != null) {
+              Get.back(result: barcodes.first.rawValue);
+            } else {
+              Get.back(result: "-1");
+            }
+          }
+        },
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
   }
 }

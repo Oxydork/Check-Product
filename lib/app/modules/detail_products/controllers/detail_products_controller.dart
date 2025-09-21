@@ -52,14 +52,27 @@ class DetailProductsController extends GetxController {
           .doc(productId)
           .delete();
 
-      // Menghapus file dari Supabase Storage jika ada
-      if (filename != null) {
-        final response = await Supabase.instance.client.storage
-            .from('product')
-            .remove([filename]);
+      // Menghapus file dari Supabase Storage jika ada versi supabase lama
+      // if (filename != null) {
+      //   final response = await Supabase.instance.client.storage
+      //       .from('product')
+      //       .remove([filename]);
 
-        if (response.error != null) {
-          throw Exception('Gagal menghapus gambar: ${response.error!.message}');
+      //   if (response.error != null) {
+      //     throw Exception('Gagal menghapus gambar: ${response.error!.message}');
+      //   }
+      // }
+
+      // Menghapus file dari Supabase Storage jika ada versi supabase baru
+      if (filename != null) {
+        try {
+          await Supabase.instance.client.storage
+              .from('product')
+              .remove([filename]);
+
+          print('File berhasil dihapus dari storage: $filename');
+        } catch (error) {
+          throw Exception('Gagal menghapus gambar: $error');
         }
       }
 
