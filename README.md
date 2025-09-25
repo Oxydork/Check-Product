@@ -1,4 +1,4 @@
-# qr_code_new
+# check-product
 
 A new Flutter project.
 
