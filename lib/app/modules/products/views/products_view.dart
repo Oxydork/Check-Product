@@ -37,13 +37,26 @@ class FloatingSearchBarExample extends StatefulWidget {
 class _FloatingSearchBarExampleState extends State<FloatingSearchBarExample> {
   String query = "";
 
+  // Fungsi untuk mendapatkan produk yang difilter
+  List<ProductModels> getFilteredProducts(
+      List<ProductModels> allProducts, String query) {
+    if (query.isEmpty) {
+      return [];
+    }
+    return allProducts.where((product) {
+      return product.name.toLowerCase().contains(query.toLowerCase()) ||
+          product.code.toLowerCase().contains(query.toLowerCase());
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     return FloatingSearchBar(
-      hint: 'Search...',
+      hint: 'Search products...',
       openAxisAlignment: 0.0,
       scrollPadding: EdgeInsets.only(top: 16, bottom: 56),
       elevation: 4.0,
+      backgroundColor: Colors.white,
       onQueryChanged: (searchQuery) {
         setState(() {
           query = searchQuery;
@@ -54,20 +67,161 @@ class _FloatingSearchBarExampleState extends State<FloatingSearchBarExample> {
       transitionDuration: Duration(milliseconds: 500),
       transition: CircularFloatingSearchBarTransition(),
       physics: BouncingScrollPhysics(),
+      actions: [
+        FloatingSearchBarAction.searchToClear(
+          showIfClosed: false,
+        ),
+      ],
       builder: (context, transition) {
         return ClipRRect(
           borderRadius: BorderRadius.circular(8),
           child: Material(
             color: Colors.white,
             elevation: 4.0,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: Colors.accents.map((color) {
+            child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+              stream: widget.controller.streamProduct(),
+              builder: (context, snapProduct) {
+                if (snapProduct.connectionState == ConnectionState.waiting) {
+                  return Container(
+                    height: 60,
+                    alignment: Alignment.center,
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.grey),
+                    ),
+                  );
+                }
+
+                if (snapProduct.data!.docs.isEmpty) {
+                  return Container(
+                    height: 60,
+                    alignment: Alignment.center,
+                    child: Text(
+                      'No products available',
+                      style: TextStyle(color: Colors.grey[600]),
+                    ),
+                  );
+                }
+
+                // Convert to ProductModels list
+                List<ProductModels> allProducts = [];
+                for (var element in snapProduct.data!.docs) {
+                  allProducts.add(ProductModels.fromJson(element.data()));
+                }
+
+                // Get filtered products
+                List<ProductModels> filteredProducts =
+                    getFilteredProducts(allProducts, query);
+
+                if (query.isEmpty) {
+                  return Container(
+                    height: 60,
+                    alignment: Alignment.center,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.search, color: Colors.grey[400]),
+                        SizedBox(width: 8),
+                        Text(
+                          'Start typing to search products...',
+                          style: TextStyle(color: Colors.grey[600]),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                if (filteredProducts.isEmpty) {
+                  return Container(
+                    height: 60,
+                    alignment: Alignment.center,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.search_off, color: Colors.grey[400]),
+                        SizedBox(width: 8),
+                        Text(
+                          'No products found for "$query"',
+                          style: TextStyle(color: Colors.grey[600]),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
                 return Container(
-                  height: 112,
-                  color: color,
+                  constraints: BoxConstraints(maxHeight: 300),
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    physics: BouncingScrollPhysics(),
+                    itemCount: filteredProducts.length,
+                    itemBuilder: (context, index) {
+                      ProductModels product = filteredProducts[index];
+                      return Container(
+                        decoration: BoxDecoration(
+                          border: Border(
+                            bottom: BorderSide(
+                              color: Colors.grey[300]!,
+                              width: 0.5,
+                            ),
+                          ),
+                        ),
+                        child: ListTile(
+                          leading: Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(6),
+                              color: Colors.grey[100],
+                              border: Border.all(color: Colors.grey[300]!),
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(6),
+                              child: Image.network(
+                                product.file_url,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Icon(
+                                    Icons.image_not_supported,
+                                    color: Colors.grey[400],
+                                    size: 20,
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                          title: Text(
+                            product.name,
+                            style: TextStyle(
+                              fontWeight: FontWeight.w500,
+                              fontSize: 14,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          subtitle: Text(
+                            product.code,
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 12,
+                            ),
+                          ),
+                          trailing: Icon(
+                            Icons.arrow_forward_ios,
+                            size: 16,
+                            color: Colors.grey[400],
+                          ),
+                          onTap: () {
+                            print("Selected from search: ${product.name}");
+                            Get.toNamed(Routes.DETAIL_PRODUCTS,
+                                arguments: product);
+                            FloatingSearchBar.of(context)?.close();
+                          },
+                        ),
+                      );
+                    },
+                  ),
                 );
-              }).toList(),
+              },
             ),
           ),
         );
@@ -99,7 +253,7 @@ class _FloatingSearchBarExampleState extends State<FloatingSearchBarExample> {
               return product.name.toLowerCase().contains(query.toLowerCase()) ||
                   product.code.toLowerCase().contains(query.toLowerCase());
             }).toList();
-            print("Filter produtc : ${filteredProducts.length}");
+            print("Filter product : ${filteredProducts.length}");
 
             return ListView.builder(
               itemCount: filteredProducts.length,
