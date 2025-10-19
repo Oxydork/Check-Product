@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:path/path.dart';
 
 import '../controllers/product_controller.dart';
@@ -58,6 +59,32 @@ class AddProductView extends GetView<AddProductController> {
             ),
           ),
           const SizedBox(height: 20),
+          TextField(
+            controller: controller.expC,
+            readOnly: true,
+            decoration: const InputDecoration(
+              labelText: 'Tanggal Exp',
+              hintText: 'dd MMM yyyy',
+              border: OutlineInputBorder(),
+              suffixIcon: Icon(Icons.calendar_month_outlined),
+            ),
+            onTap: () async {
+              final picked = await showDatePicker(
+                context: context,
+                initialDate: DateTime.now(),
+                firstDate: DateTime.now(),
+                lastDate: DateTime(2100),
+              );
+              if (picked != null) {
+                String formattedDate = DateFormat('dd MMM yyyy').format(picked);
+                controller.expC.text = formattedDate;
+              }
+            },
+          ),
+
+          const SizedBox(
+            height: 20,
+          ),
 
           // File Upload Section
           Container(

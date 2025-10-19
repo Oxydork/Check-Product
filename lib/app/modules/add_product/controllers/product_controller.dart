@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:path/path.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -27,6 +28,7 @@ class AddProductController extends GetxController {
   final TextEditingController codeC = TextEditingController();
   final TextEditingController nameC = TextEditingController();
   final TextEditingController rhC = TextEditingController();
+  final TextEditingController expC = TextEditingController();
 
   // Method untuk update selectedFile dan trigger UI rebuild
   void updateSelectedFile(XFile? file) {
@@ -45,13 +47,14 @@ class AddProductController extends GetxController {
     codeC.clear();
     nameC.clear();
     rhC.clear();
+    expC.clear();
     clearSelectedFile();
   }
 
   // Validasi form
   String? validateForm() {
     if (codeC.text.isEmpty || nameC.text.isEmpty || rhC.text.isEmpty) {
-      return "All fields are required";
+      return "Anda harus Mengisi Semuanya";
     }
 
     final rh = int.tryParse(rhC.text);
@@ -184,6 +187,7 @@ class AddProductController extends GetxController {
         "name": nameC.text.trim(),
         "returhari": int.parse(rhC.text),
         "tanggal_rilis": DateTime.now(),
+        "exp_date": DateFormat('dd MMM yyyy').parse(expC.text),
       };
 
       // Debug product data before submitting

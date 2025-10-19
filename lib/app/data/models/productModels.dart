@@ -7,6 +7,7 @@ class ProductModels {
   final int rh;
   final String file_url;
   final DateTime tanggalRilis;
+  final DateTime expDate;
 
   ProductModels({
     required this.code,
@@ -15,6 +16,7 @@ class ProductModels {
     required this.rh,
     required this.file_url,
     required this.tanggalRilis,
+    required this.expDate,
   });
 
   factory ProductModels.fromJson(Map<String, dynamic> json) => ProductModels(
@@ -24,6 +26,9 @@ class ProductModels {
         rh: json["returhari"] ?? 0,
         file_url: json["file_url"] ?? "",
         tanggalRilis: json["tanggal_rilis"].toDate(),
+        expDate: json["exp_date"] != null
+            ? json["exp_date"].toDate()
+            : DateTime.now(),
       );
 
   Map<String, dynamic> toJson() {
@@ -33,6 +38,7 @@ class ProductModels {
       "productId": productId,
       "returhari": rh,
       "tanggal_rilis": Timestamp.fromDate(tanggalRilis),
+      "exp_date": Timestamp.fromDate(expDate),
     };
 
     // Pastikan file_url disertakan meskipun kosong
@@ -50,7 +56,7 @@ class ProductModels {
       "returhari": rh,
       "file_url": file_url.isEmpty ? "" : file_url,
       "tanggal_rilis": tanggalRilis,
-
+      "exp_date": expDate,
       // Pastikan tidak null
     };
   }
