@@ -10,8 +10,12 @@ class HomeView extends GetView<HomeController> {
   HomeView({Key? key}) : super(key: key);
 
   final AuthController authC = Get.find<AuthController>();
+
   @override
   Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      controller.notifExp();
+    });
     return Scaffold(
       appBar: AppBar(
         title: const Text('Home Page'),
@@ -44,11 +48,9 @@ class HomeView extends GetView<HomeController> {
               title = "Barcode";
               icon = Icons.barcode_reader;
               onTap = () async {
-                // Ganti dari BarcodeScannerScreen.scanBarcode ke Get.to
                 String? barcode = await Get.to(() => _HomeBarcodeScanner());
 
                 if (barcode != null && barcode != "-1" && barcode.isNotEmpty) {
-                  //Get data dari firebase searching di product id
                   Map<String, dynamic> hasil =
                       await controller.getProductId(barcode);
                   if (hasil['error'] == false) {
@@ -133,7 +135,7 @@ class _HomeBarcodeScannerState extends State<_HomeBarcodeScanner> {
         backgroundColor: Colors.black,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => Get.back(result: "-1"), // Return "-1" seperti cancel
+          onPressed: () => Get.back(result: "-1"),
         ),
       ),
       body: MobileScanner(
