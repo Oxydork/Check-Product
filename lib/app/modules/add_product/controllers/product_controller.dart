@@ -10,6 +10,8 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:path/path.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../data/models/productMasterService.dart';
+
 class AddProductController extends GetxController {
   RxBool isLoading = false.obs;
   RxString scannedBarcode = ''.obs;
@@ -18,6 +20,9 @@ class AddProductController extends GetxController {
 
   // Regular variable untuk selectedFile - digunakan dengan GetBuilder
   XFile? selectedFile;
+
+  // Service untuk handle product master database
+  final ProductMasterService _productService = ProductMasterService();
 
   final SupabaseClient supabaseClient = SupabaseClient(
     'https://qrisvyccbwybkrmjkdcj.supabase.co',
@@ -29,6 +34,100 @@ class AddProductController extends GetxController {
   final TextEditingController nameC = TextEditingController();
   final TextEditingController rhC = TextEditingController();
   final TextEditingController expC = TextEditingController();
+
+  @override
+  void onInit() {
+    super.onInit();
+    setupProductDatabase();
+  }
+
+  // Setup database di background saat controller init
+  Future<void> setupProductDatabase() async {
+    try {
+      print('Setting up product database...');
+      await _productService.setup();
+
+      final count = await _productService.getProductCount();
+      print('Product database ready with $count products');
+    } catch (e) {
+      print('Error setting up database: $e');
+    }
+  }
+
+  // Cari product berdasarkan barcode dari SQLite database
+  Future<void> searchProductByBarcode(String barcode) async {
+    if (barcode.isEmpty) return;
+
+    print('Searching product with barcode: $barcode');
+
+    try {
+      final product = await _productService.findByBarcode(barcode);
+
+      if (product != null) {
+        // Product ditemukan, isi otomatis
+        nameC.text = product.name;
+        rhC.text = product.rh.toString();
+
+        print('Product found: ${product.name}');
+
+        Get.snackbar(
+          "Product Found",
+          "Auto-filled: ${product.name}",
+          backgroundColor: Colors.green.shade100,
+          colorText: Colors.green.shade800,
+          icon: const Icon(Icons.check_circle, color: Colors.green),
+          duration: const Duration(seconds: 2),
+        );
+      } else {
+        // Product tidak ditemukan
+        nameC.clear();
+        rhC.clear();
+
+        print('Product not found for barcode: $barcode');
+
+        Get.snackbar(
+          "Product Not Found",
+          "Please enter product details manually",
+          backgroundColor: Colors.orange.shade100,
+          colorText: Colors.orange.shade800,
+          icon: const Icon(Icons.info, color: Colors.orange),
+          duration: const Duration(seconds: 2),
+        );
+      }
+    } catch (e) {
+      print('Error searching product: $e');
+      Get.snackbar(
+        "Search Error",
+        "Failed to search product",
+        backgroundColor: Colors.red.shade100,
+        colorText: Colors.red.shade800,
+      );
+    }
+  }
+
+  // Barcode scanner
+  Future<void> startScanning() async {
+    try {
+      isScanning.value = true;
+
+      final result = await Get.to(() => _BarcodeScannerPage());
+
+      if (result != null && result.toString().isNotEmpty && result != "-1") {
+        scannedBarcode.value = result.toString();
+        codeC.text = scannedBarcode.value;
+
+        // Auto search setelah scan
+        await searchProductByBarcode(scannedBarcode.value);
+      } else {
+        scannedBarcode.value = '';
+      }
+    } catch (e) {
+      print('Error scanning barcode: $e');
+      scannedBarcode.value = '';
+    } finally {
+      isScanning.value = false;
+    }
+  }
 
   // Method untuk update selectedFile dan trigger UI rebuild
   void updateSelectedFile(XFile? file) {
@@ -319,26 +418,6 @@ class AddProductController extends GetxController {
     }
   }
 
-  Future<void> startScanning() async {
-    try {
-      isScanning.value = true;
-
-      final result = await Get.to(() => _BarcodeScannerPage());
-
-      if (result != null && result.toString().isNotEmpty && result != "-1") {
-        scannedBarcode.value = result.toString();
-        codeC.text = scannedBarcode.value;
-      } else {
-        scannedBarcode.value = '';
-      }
-    } catch (e) {
-      print('Error scanning barcode: $e');
-      scannedBarcode.value = '';
-    } finally {
-      isScanning.value = false;
-    }
-  }
-
   Future<XFile?> pickFile({bool fromCamera = false}) async {
     try {
       final ImagePicker _picker = ImagePicker();
@@ -419,6 +498,7 @@ class AddProductController extends GetxController {
     codeC.dispose();
     nameC.dispose();
     rhC.dispose();
+    expC.dispose();
     super.onClose();
   }
 }
@@ -441,8 +521,7 @@ class _BarcodeScannerPageState extends State<_BarcodeScannerPage> {
         backgroundColor: Colors.black,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () =>
-              Get.back(result: "-1"), // Mirip cancel di FlutterBarcodeScanner
+          onPressed: () => Get.back(result: "-1"),
         ),
       ),
       body: MobileScanner(

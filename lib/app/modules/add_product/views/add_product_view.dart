@@ -16,6 +16,7 @@ class AddProductView extends GetView<AddProductController> {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
+          // Product Code Field dengan auto-search
           TextField(
             autocorrect: false,
             controller: controller.codeC,
@@ -30,15 +31,29 @@ class AddProductView extends GetView<AddProductController> {
                 onPressed: () async {
                   await controller.startScanning();
                 },
-                icon: Icon(Icons.camera_alt),
+                icon: const Icon(Icons.camera_alt),
               ),
             ),
+            onChanged: (value) {
+              // Auto-search ketika user mengetik 13 digit
+              if (value.length == 13) {
+                controller.searchProductByBarcode(value);
+              } else if (value.isEmpty) {
+                // Clear fields jika barcode dihapus
+                controller.nameC.clear();
+                controller.rhC.clear();
+              }
+            },
           ),
+
           const SizedBox(height: 20),
+
+          // Product Name Field (auto-filled)
           TextField(
             autocorrect: false,
             controller: controller.nameC,
             keyboardType: TextInputType.name,
+            readOnly: true,
             decoration: InputDecoration(
               labelText: "Product Name",
               border: OutlineInputBorder(
@@ -46,10 +61,14 @@ class AddProductView extends GetView<AddProductController> {
               ),
             ),
           ),
+
           const SizedBox(height: 20),
+
+          // RH Field (auto-filled)
           TextField(
             autocorrect: false,
             controller: controller.rhC,
+            readOnly: true,
             keyboardType: TextInputType.number,
             decoration: InputDecoration(
               labelText: "RH",
@@ -58,7 +77,10 @@ class AddProductView extends GetView<AddProductController> {
               ),
             ),
           ),
+
           const SizedBox(height: 20),
+
+          // Exp Date Field
           TextField(
             controller: controller.expC,
             readOnly: true,
@@ -82,9 +104,7 @@ class AddProductView extends GetView<AddProductController> {
             },
           ),
 
-          const SizedBox(
-            height: 20,
-          ),
+          const SizedBox(height: 20),
 
           // File Upload Section
           Container(
@@ -101,7 +121,7 @@ class AddProductView extends GetView<AddProductController> {
                     return controller.selectedFile != null
                         ? Column(
                             children: [
-                              Icon(
+                              const Icon(
                                 Icons.image,
                                 size: 40,
                                 color: Colors.green,
@@ -162,7 +182,7 @@ class AddProductView extends GetView<AddProductController> {
                             ),
                           ),
                           const SizedBox(height: 5),
-                          Text(
+                          const Text(
                             "(Optional)",
                             style: TextStyle(
                               color: Colors.grey,
@@ -200,10 +220,10 @@ class AddProductView extends GetView<AddProductController> {
                         fontWeight: FontWeight.bold,
                       ),
                     )
-                  : Row(
+                  : const Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const SizedBox(
+                        SizedBox(
                           width: 20,
                           height: 20,
                           child: CircularProgressIndicator(
@@ -211,8 +231,8 @@ class AddProductView extends GetView<AddProductController> {
                             strokeWidth: 2,
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        const Text(
+                        SizedBox(width: 12),
+                        Text(
                           "Adding Product...",
                           style: TextStyle(
                             color: Colors.white,
