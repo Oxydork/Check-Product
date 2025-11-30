@@ -6,10 +6,10 @@ import 'package:qr_code_new/app/routes/app_pages.dart';
 import '../controllers/login_controller.dart';
 
 class LoginView extends GetView<LoginController> {
-  final TextEditingController emailC =
-      TextEditingController(text: "admin1@gmail.com");
-  final TextEditingController passC =
-      TextEditingController(text: "admin123321");
+  final TextEditingController emailC = TextEditingController();
+  //text: "admin1@gmail.com"
+  final TextEditingController passC = TextEditingController();
+  //text: "admin123321"
   final AuthController authC = Get.find<AuthController>();
   @override
   Widget build(BuildContext context) {
@@ -68,6 +68,7 @@ class LoginView extends GetView<LoginController> {
                   () => Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 25),
                     child: TextField(
+                      controller: passC,
                       decoration: InputDecoration(
                         enabledBorder: const OutlineInputBorder(
                           borderSide: BorderSide(color: Colors.white),
@@ -114,20 +115,33 @@ class LoginView extends GetView<LoginController> {
                   onTap: () async {
                     if (controller.isLoading.isFalse) {
                       if (emailC.text.isNotEmpty && passC.text.isNotEmpty) {
+                        print("=== LOGIN START ===");
+                        print("Email : ${emailC.text}");
+                        print("Pass : ${passC.text}");
+
                         controller.isLoading(true);
                         Map<String, dynamic> hasil =
                             await authC.login(emailC.text, passC.text);
                         controller.isLoading(false);
 
+                        print("=== LOGIN RESPONSE ===");
+                        print("Hasil lengkap: $hasil");
+                        print("hasil['error'] = ${hasil["error"]}");
+                        print("hasil['message'] = ${hasil["message"]}");
+                        print("Tipe data error: ${hasil["error"].runtimeType}");
+                        print("Hasil error == true? ${hasil["error"] == true}");
+
                         if (hasil["error"] == true) {
+                          print(">>> MASUK KE BLOK ERROR");
                           Get.snackbar("Error", hasil["message"]);
                         } else {
+                          print(">>> MASUK KE BLOK SUCCESS");
+                          print("Navigasi ke HOME...");
                           Get.offAllNamed(Routes.HOME);
                         }
                       } else {
                         Get.snackbar("Error", "Email & Password Wajib Diisi");
                       }
-                      ;
                     }
                   },
                   child: Container(
@@ -141,12 +155,12 @@ class LoginView extends GetView<LoginController> {
                         () => Text(
                           controller.isLoading.isFalse
                               ? "Login"
-                              : " Loading ....",
+                              : "Loading....",
                           style: TextStyle(
                               color: controller.isLoading.isFalse
                                   ? Colors.white
                                   : Colors.white30,
-                              fontSize: controller.isLoading.isFalse ? 18 : 18),
+                              fontSize: 18),
                         ),
                       ),
                     ),

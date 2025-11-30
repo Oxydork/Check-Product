@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:qr_code_new/app/controllers/auth_controller.dart';
+import 'package:qr_code_new/app/modules/login/controllers/login_controller.dart';
 import 'package:qr_code_new/app/routes/app_pages.dart';
 
 import '../controllers/home_controller.dart';
@@ -106,6 +107,13 @@ class HomeView extends GetView<HomeController> {
         onPressed: () async {
           Map<String, dynamic> hasil = await authC.logout();
           if (hasil["error"] == false) {
+            Get.delete<LoginController>(force: true);
+            Get.snackbar(
+              "Succes",
+              hasil["message"],
+              backgroundColor: Colors.green,
+              colorText: Colors.white,
+            );
             Get.offAllNamed(Routes.LOGIN);
           } else {
             Get.snackbar("Error", hasil["error"]);

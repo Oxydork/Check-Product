@@ -134,7 +134,7 @@ class HomeController extends GetxController {
   void _showExpiredProductsDialog() {
     Get.dialog(
       AlertDialog(
-        title: Row(
+        title: const Row(
           children: [
             Icon(Icons.warning_rounded, color: Colors.orange),
             SizedBox(width: 10),
@@ -197,12 +197,12 @@ class HomeController extends GetxController {
                         ),
                       ],
                     ),
-                    SizedBox(height: 6),
+                    const SizedBox(height: 6),
                     Text(
                       'Kode: ${notification.product.code}',
                       style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                     ),
-                    SizedBox(height: 4),
+                    const SizedBox(height: 4),
                     Text(
                       notification.message,
                       style: TextStyle(
