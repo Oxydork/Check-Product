@@ -3,12 +3,14 @@ import 'package:get/get.dart';
 import 'package:qr_code_new/app/controllers/auth_controller.dart';
 import 'package:qr_code_new/app/routes/app_pages.dart';
 
-import '../controllers/login_controller.dart';
+import '../controllers/register_controller.dart';
 
-class LoginView extends GetView<LoginController> {
+class RegisterView extends GetView<RegisterController> {
   final _formKey = GlobalKey<FormState>();
+  final TextEditingController nameC = TextEditingController();
   final TextEditingController emailC = TextEditingController();
   final TextEditingController passC = TextEditingController();
+  final TextEditingController confirmPassC = TextEditingController();
   final AuthController authC = Get.find<AuthController>();
 
   @override
@@ -36,13 +38,13 @@ class LoginView extends GetView<LoginController> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Icon(
-                  Icons.lock,
+                  Icons.person_add,
                   size: 60,
                   color: Colors.white,
                 ),
                 const SizedBox(height: 20),
                 const Text(
-                  "Welcome Back!",
+                  "Create Account",
                   style: TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
@@ -51,7 +53,7 @@ class LoginView extends GetView<LoginController> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  "Sign in to your account",
+                  "Sign up to get started",
                   style: TextStyle(
                     fontSize: 14,
                     color: Colors.white.withOpacity(0.9),
@@ -67,9 +69,42 @@ class LoginView extends GetView<LoginController> {
             child: Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
+                  // Name Field
+                  TextFormField(
+                    controller: nameC,
+                    textInputAction: TextInputAction.next,
+                    decoration: InputDecoration(
+                      labelText: 'Full Name',
+                      hintText: 'Enter your full name',
+                      prefixIcon: const Icon(Icons.person_outline),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey.shade300),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide:
+                            const BorderSide(color: Colors.blue, width: 2),
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey.shade50,
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter your name';
+                      }
+                      if (value.length < 3) {
+                        return 'Name must be at least 3 characters';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+
                   // Email Field
                   TextFormField(
                     controller: emailC,
@@ -103,7 +138,6 @@ class LoginView extends GetView<LoginController> {
                       }
                       return null;
                     },
-                    onChanged: (_) => _formKey.currentState?.validate(),
                   ),
                   const SizedBox(height: 16),
 
@@ -112,7 +146,7 @@ class LoginView extends GetView<LoginController> {
                     () => TextFormField(
                       controller: passC,
                       obscureText: controller.isHidden.value,
-                      textInputAction: TextInputAction.done,
+                      textInputAction: TextInputAction.next,
                       decoration: InputDecoration(
                         labelText: 'Password',
                         hintText: 'Enter your password',
@@ -152,26 +186,60 @@ class LoginView extends GetView<LoginController> {
                         }
                         return null;
                       },
-                      onChanged: (_) => _formKey.currentState?.validate(),
                     ),
                   ),
+                  const SizedBox(height: 16),
 
-                  // Forgot Password
-                  TextButton(
-                    onPressed: () {
-                      Get.toNamed(Routes.FORGOT_PASSWORD);
-                    },
-                    child: const Text(
-                      'Forgot Password?',
-                      style: TextStyle(
-                        color: Colors.blue,
-                        fontWeight: FontWeight.w600,
+                  // Confirm Password Field
+                  Obx(
+                    () => TextFormField(
+                      controller: confirmPassC,
+                      obscureText: controller.isHiddenConfirm.value,
+                      textInputAction: TextInputAction.done,
+                      decoration: InputDecoration(
+                        labelText: 'Confirm Password',
+                        hintText: 'Re-enter your password',
+                        prefixIcon: const Icon(Icons.lock_outline),
+                        suffixIcon: IconButton(
+                          onPressed: () {
+                            controller.isHiddenConfirm.toggle();
+                          },
+                          icon: Icon(
+                            controller.isHiddenConfirm.value
+                                ? Icons.visibility_off_outlined
+                                : Icons.visibility_outlined,
+                            size: 20,
+                          ),
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.grey.shade300),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide:
+                              const BorderSide(color: Colors.blue, width: 2),
+                        ),
+                        filled: true,
+                        fillColor: Colors.grey.shade50,
                       ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please confirm your password';
+                        }
+                        if (value != passC.text) {
+                          return 'Passwords do not match';
+                        }
+                        return null;
+                      },
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 24),
 
-                  // Login Button
+                  // Register Button
                   Obx(
                     () => SizedBox(
                       width: double.infinity,
@@ -181,42 +249,32 @@ class LoginView extends GetView<LoginController> {
                             ? () async {
                                 if (_formKey.currentState?.validate() ??
                                     false) {
-                                  if (emailC.text.isNotEmpty &&
-                                      passC.text.isNotEmpty) {
-                                    print("=== LOGIN START ===");
-                                    print("Email : ${emailC.text}");
-                                    print("Pass : ${passC.text}");
+                                  controller.isLoading(true);
+                                  Map<String, dynamic> hasil =
+                                      await authC.register(
+                                    nameC.text,
+                                    emailC.text,
+                                    passC.text,
+                                  );
+                                  controller.isLoading(false);
 
-                                    controller.isLoading(true);
-                                    Map<String, dynamic> hasil = await authC
-                                        .login(emailC.text, passC.text);
-                                    controller.isLoading(false);
-
-                                    print("=== LOGIN RESPONSE ===");
-                                    print("Hasil lengkap: $hasil");
-                                    print("hasil['error'] = ${hasil["error"]}");
-                                    print(
-                                        "hasil['message'] = ${hasil["message"]}");
-
-                                    if (hasil["error"] == true) {
-                                      print(">>> MASUK KE BLOK ERROR");
-                                      Get.snackbar(
-                                        "Error",
-                                        hasil["message"],
-                                        snackPosition: SnackPosition.BOTTOM,
-                                        backgroundColor: Colors.red.shade400,
-                                        colorText: Colors.white,
-                                      );
-                                    } else {
-                                      Get.snackbar(
-                                        "Success",
-                                        "Login successful!",
-                                        snackPosition: SnackPosition.BOTTOM,
-                                        backgroundColor: Colors.green.shade400,
-                                        colorText: Colors.white,
-                                      );
-                                      Get.offAllNamed(Routes.HOME);
-                                    }
+                                  if (hasil["error"] == true) {
+                                    Get.snackbar(
+                                      "Error",
+                                      hasil["message"],
+                                      snackPosition: SnackPosition.BOTTOM,
+                                      backgroundColor: Colors.red.shade400,
+                                      colorText: Colors.white,
+                                    );
+                                  } else {
+                                    Get.snackbar(
+                                      "Success",
+                                      "Registration successful! Please login.",
+                                      snackPosition: SnackPosition.BOTTOM,
+                                      backgroundColor: Colors.green.shade400,
+                                      colorText: Colors.white,
+                                    );
+                                    Get.offAllNamed(Routes.LOGIN);
                                   }
                                 }
                               }
@@ -231,7 +289,7 @@ class LoginView extends GetView<LoginController> {
                         ),
                         child: controller.isLoading.isFalse
                             ? const Text(
-                                'Login',
+                                'Register',
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
@@ -252,14 +310,14 @@ class LoginView extends GetView<LoginController> {
                   ),
                   const SizedBox(height: 20),
 
-                  // Divider with text
+                  // Divider
                   Row(
                     children: [
                       Expanded(child: Divider(color: Colors.grey.shade300)),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Text(
-                          'Or login with',
+                          'Or register with',
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.grey.shade600,
@@ -271,15 +329,13 @@ class LoginView extends GetView<LoginController> {
                   ),
                   const SizedBox(height: 20),
 
-                  // Social Login Buttons
+                  // Social Register Buttons
                   Row(
                     children: [
                       Expanded(
                         child: OutlinedButton.icon(
-                          onPressed: () {
-                            // Google login
-                          },
-                          icon: const Icon(Icons.g_mobiledata,
+                          onPressed: () {},
+                          icon: Icon(Icons.g_mobiledata,
                               size: 24, color: Colors.red),
                           label: const Text(
                             'Google',
@@ -297,9 +353,7 @@ class LoginView extends GetView<LoginController> {
                       const SizedBox(width: 16),
                       Expanded(
                         child: OutlinedButton.icon(
-                          onPressed: () {
-                            // Facebook login
-                          },
+                          onPressed: () {},
                           icon: Icon(Icons.facebook,
                               size: 20, color: Colors.blue.shade700),
                           label: const Text(
@@ -322,14 +376,14 @@ class LoginView extends GetView<LoginController> {
             ),
           ),
 
-          // Register Link
+          // Login Link
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 20),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  "Don't have an account?",
+                  "Already have an account?",
                   style: TextStyle(
                     fontSize: 14,
                     color: Colors.grey.shade700,
@@ -338,10 +392,10 @@ class LoginView extends GetView<LoginController> {
                 const SizedBox(width: 4),
                 TextButton(
                   onPressed: () {
-                    Get.toNamed(Routes.REGISTER);
+                    Get.back();
                   },
                   child: const Text(
-                    'Register',
+                    'Login',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,

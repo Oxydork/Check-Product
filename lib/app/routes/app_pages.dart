@@ -1,7 +1,8 @@
 import 'package:get/get.dart';
-import 'package:qr_code_new/app/modules/add_product/views/add_product_view.dart';
+import 'package:qr_code_new/app/modules/forgot_password/views/forgot_password_view.dart';
 
 import '../modules/add_product/bindings/product_binding.dart';
+import '../modules/add_product/views/add_product_view.dart';
 import '../modules/detail_products/bindings/detail_products_binding.dart';
 import '../modules/detail_products/views/detail_products_view.dart';
 import '../modules/home/bindings/home_binding.dart';
@@ -10,6 +11,8 @@ import '../modules/login/bindings/login_binding.dart';
 import '../modules/login/views/login_view.dart';
 import '../modules/products/bindings/products_binding.dart';
 import '../modules/products/views/products_view.dart';
+import '../modules/register/bindings/register_binding.dart';
+import '../modules/register/views/register_view.dart';
 
 part 'app_routes.dart';
 
@@ -43,6 +46,15 @@ class AppPages {
       name: _Paths.DETAIL_PRODUCTS,
       page: () => DetailProductsView(),
       binding: DetailProductsBinding(),
+    ),
+    GetPage(
+      name: _Paths.REGISTER,
+      page: () => RegisterView(),
+      binding: RegisterBinding(),
+    ),
+    GetPage(
+      name: _Paths.FORGOT_PASSWORD,
+      page: () => ForgotPasswordView(),
     ),
   ];
 }
